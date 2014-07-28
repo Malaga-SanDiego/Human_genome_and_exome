@@ -1,0 +1,126 @@
+#!/usr/bin/perl -w
+use 5.10.1;
+use warnings;
+use strict;
+
+
+# Below are the standards perl modules found in all of my scripts
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Basename;
+use File::Spec;
+
+
+# My Personal Genome format describes single nucleotide substitutions (SNS) the Chrom\tStart\tEnd format
+## For example, 10\t244456\t244457
+# The End for each SNS is Start + 1; the End position corresponds to actual base in the reference genome (version 37)
+# This scripts makes all files NR at the end
+# Use the variables defined below to modify the output file extensions
+# $P[2] - chromosome
+# $P[3] - start position for a variant
+# $P[4] - end position for a variant
+# $P[4] is the 1-based reference base. VERIFIED, FILES NOT SAVED!
+# $P[3] is the 0-based reference base. VERIFIED, FILES NOT SAVED!
+
+# Define the directory where your files of interest are found
+my $In_Dir = 'Paste_Input_Directory_Here';
+
+# Define the directory where you want your output saved
+my $Out_Dir = 'Paste_Output_Directory_Here';
+
+# If needed, separate 'mkdir' command can be added to this script to in order to make the '$Out_Dir' automatically
+
+my $Slash = "\/";
+
+my $Ex = "\.ex";			# file contains high-quality missense, nonsense, no-change, and silent variants
+my $Wgen = "\.wgen";		# file contains just high quality snp from whole genome
+my $NR = "\.nr";			# means 'non-redunant' - all lines fom a mapping are printed out just once
+
+opendir (DIR,"$In_Dir$Slash") or die "$!";
+
+# The 'grep' defines the regex whereby the files of interest are recognized
+# In the below '@file' array all files with the .txt and .tsv extension are recognized
+# Any other regular expression can be used in the grep function
+# The period symbol '.' needs to be negated, otherwise it will mean any symbol in perl
+my @file = grep {/\.tsv$/}  readdir DIR;
+
+	foreach my $file (@file) {
+
+###########################################################
+# In th current version the exome variant are printed out (extension .ex) including the variants annoated as 'DONOR' and 'ACCEPTOR'
+# If needed, substitute the .ex extension for .wgen (whole genome) and use the 'print' in Line 73
+# '$P[4]-$[3]==1' used to ensure that the print outs only contain single nucleotide substitutions (SNS)
+# Insertions, deletions and more complex variants require a different set of scripts
+ 
+		open (IN,"$In_Dir$Slash$file") or die "can't open the input file";
+		open (OUT,">>$Out_Dir$Slash$file$Ex") or die "can't open output file";
+
+			select (OUT);
+
+				while(<IN>){
+
+					# Format input to facilitate downstream scripts 
+					s/chr//;
+					s/Y/24/;
+					s/X/23/;
+	
+					# each line is handled as an array @p
+					# '\t' is the delimiter of @P
+					# $P[0], $P[1], $P[2] etc define the elements of array @P
+					my @P = split/\t/;
+		
+						print "$P[2]\:$P[4]\n" if m/\tsnp.{1,}\tVQHIGH\t.{1,}CDS\:MISSENSE\t/ && $P[4] - $P[3] == 1;
+						print "$P[2]\:$P[4]\n" if m/\tsnp.{1,}\tVQHIGH\t.{1,}CDS\:NONSENSE\t/ && $P[4] - $P[3] == 1;
+						print "$[2]\:$P[4]\n" if m/\tsnp.{1,}\tVQHIGH\t.{1,}CDS\:SILENT\t/ && $P[4] - $P[3] == 1;
+						print "$P[2]\:$P[4]\n" if m/\tsnp.{1,}\tVQHIGH\t.{1,}CDS\:NO-CHANGE\t/ && $P[4] - $P[3] == 1;
+						print "$P[2]\:$P[4]\n" if m/\tsnp.{1,}\tVQHIGH\t.{1,}\:DONOR/ && $P[4] - $P[3] == 1;
+						print "$P[2]\:$P[4]\n" if m/\tsnp.{1,}\tVQHIGH\t.{1,}\:ACCEPTOR/ && $P[4] - $P[3] == 1;
+				
+				# print "$P[2]\:$P[4]\n" if m/\tsnp.{1,}\tVQHIGH\t/ && $P[4] - $P[3] == 1;
+		
+				}
+
+		close(IN);
+		close(OUT);
+
+#############################
+### MAKE OUTPUT FILES NR ####
+# NR - non-redundant, each line in a file is only printed out once		
+
+opendir (DIR,"$Out_Dir$Slash") or die "$!";
+my @file_2 = grep {/\.ex$|\.wgen$/}  readdir DIR;
+
+	foreach my $file_2 (@file_2) {
+
+		open(IN,"$Out_Dir$Slash$file_2") or die "$!";
+		open(OUT,">>$Out_Dir$Slash$file_2$NR") or die "$!";
+
+		select(OUT);
+
+			my %seen;
+
+				while (<IN>){
+
+				print if $seen{$_}++ == 0; # removes replicates, prints out singles
+
+			}
+
+		close(IN);
+		close(OUT);
+	}
+close(DIR);
+###########################################
+### Delete files not with the .nr extension
+
+opendir (DIR,"$Out_Dir$Slash") or die "$!";
+my @file_X = grep {/\.ex$|\.wgen$/}  readdir DIR;
+
+	foreach my $file_X (@file_X) {
+
+			unlink("$Out_Dir$Slash$file_X");	
+
+	}
+
+close(DIR);
+}
