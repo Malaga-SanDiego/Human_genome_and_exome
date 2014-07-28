@@ -1,0 +1,64 @@
+#!/usr/bin/perl -w
+use 5.006;
+use strict;
+use warnings;
+
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Basename;
+use File::Spec;
+
+
+my $Slash = "\/";
+my $Ext_pl = "\.pl";
+my $Pipe = "\_PIPE";
+
+
+# Sub-folder names where the temporary perl-files are pasted in the below parentheses
+my @Dir = (
+);
+
+
+foreach my $Dir (@Dir) {
+
+open(OUT,">>$Dir$Pipe$Ext_pl") or die "$!";
+
+select(OUT);
+
+# Now the temporary per-files are written
+			
+print "\#\!\/usr\/bin\/perl \-w\n";
+print "use 5\.10\.1\;\n";
+print "use warnings\;\n";
+print "use strict\;\n\n";
+
+print "use File\:\:Find\;\n";
+print "use File\:\:Copy\;\n";
+print "use File\:\:Path\;\n";
+print "use File\:\:Basename\;\n";
+print "use File\:\:Spec\;\n\n\n";
+	
+close(OUT);
+
+
+opendir (DIR,"$Dir") or die "$!";
+
+	my @file = grep {/.pl$/}  readdir DIR;
+	
+		foreach my $file (@file) {
+
+			open(OUT,">>$Dir$Pipe$Ext_pl") or die "$!";
+
+			select(OUT);
+
+			print 'system("perl ';		
+			print "$Dir$Slash$file";
+			print '");';		
+			print "\n";
+
+		}
+	close(OUT);
+#################
+}
+close(DIR);
