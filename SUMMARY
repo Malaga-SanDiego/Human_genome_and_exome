@@ -1,0 +1,84 @@
+#!/usr/bin/perl -w
+use 5.006;
+use strict;
+use warnings;
+
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Basename;
+use File::Spec;
+
+
+# $Hit_Count needed to determine the number hits in each sample. See the bottom of this script for details
+
+my $Hit_Count = "Paste_Input_Directory_Here";
+
+
+# Right now the actually summary file is defined as "xHIT_COUNT.hit" - alter this as you please
+my $Count = "xHIT_COUNT.hit";
+
+my $Slash = "\/";
+my $Ext_pl = "\.pl";
+my $Pipe = "\_PIPE";
+
+# Paste the folder and file names in below parentheses. Make sure to follow the ("",...,"") syntax. 
+# You can use the \n after commas that separate the  array elements
+
+my @Dir = (
+);
+
+foreach my $Dir (@Dir) {
+
+opendir (DIR,"$Dir") or die "$!";
+
+	my @file_X = grep {/\.pl$/}  readdir DIR;
+	
+		foreach my $file_X (@file_X) {
+
+			unlink( "$Dir$Slash$file_X");
+
+	}
+
+}
+
+close(DIR);
+
+#################################################################################
+### Write the SUMMARY of all .map files ###
+
+opendir (DIR,"$Hit_Count$Slash") or die "$!";
+my @file_H = grep {/\.map$/}  readdir DIR;
+
+	foreach my $file_H (@file_H) {
+		open(IN,"$Hit_Count$Slash$file_H") or die "$!";
+		open(OUT,">>$Hit_Count$Slash$Count") or die "$!";
+
+			select(OUT);
+						
+				while(<IN>){
+				
+				}
+					
+			print "$file_H";
+			print "\t$.\n";
+	
+		close(IN);
+		close(OUT);
+
+	}
+
+close(DIR);
+
+#################################################################################
+
+opendir (DIR,"$Hit_Count$Slash") or die "$!";
+my @file_pl = grep {/\_PIPE\.pl$/}  readdir DIR;
+
+	foreach my $file_pl (@file_pl) {
+
+			unlink("$Hit_Count$Slash$file_pl");	
+
+	}
+
+close(DIR);
