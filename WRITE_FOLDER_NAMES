@@ -1,0 +1,38 @@
+#!/usr/bin/perl -w
+use 5.10.1;
+use warnings;
+use strict;
+
+
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Basename;
+use File::Spec;
+
+
+# Write the list of all sub-directories
+# The sub-directories contain the files split into 24 chromosome specific files by:
+# 'MOVE_FILES_MAKE_DIR_SPLIT_CHROM.pl'
+
+my $Dir = 'Paste_directory_name_here';
+
+my $Slash = "\/";
+my $Name = "zNAMES_in_Directory.z";
+
+opendir (DIR,"$Dir") or die "$!";
+	
+	my @SUB = grep {//}  readdir DIR;
+	
+		foreach my $SUB (@SUB) {
+
+			open(OUT,">>$Dir$Slash$Name") or die "$!";				
+				
+				select(OUT);
+				
+					print "\"$Dir$Slash$SUB\",\n";
+					
+		close(OUT);
+	}
+close(DIR);
+	
