@@ -1,0 +1,130 @@
+#!/usr/bin/perl -w
+use 5.006;
+use strict;
+use warnings;
+
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Basename;
+use File::Spec;
+
+
+my $Ext_pl = "\.pl";
+my $Ext_txt = "\.txt";
+my $Ext_map = "\.map";
+my $Summary = "Summary";
+my $Slash = "\/";
+my $Underscore = "\_";
+
+# Each chromosome represented by a set of ranges
+# Chromosome-specific range sets separated by semi-colon
+# @Vx defines all specific files where the range coordinates to be analyzed are saved
+# All files containing the ranges have no extension in order to make the output less messy
+
+my @Vx = ("E1_A_MINUS_CCDS",
+"E1_A_PLUS_CCDS",
+"E2_A_MINUS_CCDS",
+"E2_A_PLUS_CCDS",
+"Ey_D_MINUS_CCDS",
+"Ey_D_PLUS_CCDS",
+"Ez_D_MINUS_CCDS",
+"Ez_D_PLUS_CCDS",
+"I1_D_MINUS_CCDS",
+"I1_D_PLUS_CCDS",
+"I2_D_MINUS_CCDS",
+"I2_D_PLUS_CCDS",
+"Iy_A_MINUS_CCDS",
+"Iy_A_PLUS_CCDS",
+"Iz_A_MINUS_CCDS",
+"Iz_A_PLUS_CCDS",
+);
+
+foreach my $Vx (@Vx){
+
+
+# $Rx defines the directory where the ranges to be analysed are saved
+my $Rx = 'C:/INTERPRETIVE_GENOMICS/DONOR_ACCEPTOR_RANGES';
+
+
+my @Range = ("$Rx$Slash$Vx");
+
+	foreach my $Range (@Range){
+
+		foreach (my $i=0; $i <= 24; $i++) {
+
+# Paste all directory names to used in the parenthesis below
+# 'WRITE_FOLDER_NAMES.pl' writes out all folder names. Paste the output of this script in the parentheses below
+# @Dir holds the names of all directories where the individual variant lists are split chromosome specifically
+
+my @Dir = (
+);
+
+			foreach my $Dir (@Dir) {
+
+			opendir (DIR,"$Dir") or die "$!";
+
+				my @file = grep {/^$i\_/}  readdir DIR;
+	
+					foreach my $file (@file) {
+
+						open(IN,"$Range") or die "$!";
+						open(OUT,">>$Dir$Slash$Vx$Underscore$file$Ext_pl") or die "$!";
+
+						select(OUT);
+
+						while (<IN>) {
+			
+						print "\#\!\/usr\/bin\/perl \-w\n";
+						print "use 5\.10\.1\;\n";
+						print "use warnings\;\n";
+						print "use strict\;\n\n";
+
+						### Don't change anything above ###			
+			
+						print 'open (IN,"';
+						print "$Dir$Slash$file";
+						print '");';
+						print "\n";
+						print 'open (OUT,">>';
+
+						print "$Dir\_$Vx\_$Summary$Ext_map";
+				
+						print '");';
+						print "\n\n";
+
+						print "select(OUT);";
+						print "\n\n";
+						print "while(<IN>){\n\n";
+				
+						print "my \@W \= split \/\\:\/\;";
+						print "\n\n\n";
+						print "my \@P \= \(";
+
+						### Don't change anything below ###	
+						my @Piwi = split /\;/;
+														
+						print "$Piwi[$i-1]";
+						### Don't change anything above ###
+			
+						print ");";
+						print "\n\n";			
+						print "foreach my \$P\(\@P)\{\n\n";			
+						print "print \$\_ if \$P\;\n\n";
+						print "}\n";
+						print "}\n";
+						print "close(IN);\n";
+						print "close(OUT);\n";
+		
+					}
+
+				close(IN);
+				close(OUT);
+				#################
+				}
+
+				close(DIR);
+			}
+		}
+	}
+}
