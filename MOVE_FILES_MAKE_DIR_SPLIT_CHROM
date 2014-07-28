@@ -1,0 +1,78 @@
+#!/usr/bin/perl -w
+use 5.006;
+use strict;
+use warnings;
+
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Basename;
+use File::Spec;
+
+
+
+my $Slash = '\/';
+
+#### DEFINE DIRECTORY OF INPUT FILES #################################
+# Alternate between directories as needed
+
+my $In_Dir = 'Paste_Input_directory_here';
+
+
+#### DEFINE OUTPUT DIRECTORY #########################################
+# Alternate between directories as needed
+# The output directory must be different than the input directory
+
+my $Out_Dir = 'Paste_output_directory_here';
+
+# Write the file-specific sub-folders in the out-directory
+opendir (DIR,"$In_Dir") or die "$!";
+	
+	my @file = grep {//}  readdir DIR;
+		
+		foreach my $file (@file) {
+
+			mkdir("$Out_Dir$Slash$file")  or die "$!";
+
+# Split the files from in-directory, one at the time, into the out-directory sub-folders
+my $Output_file ='.txt';
+
+my $Under_Score = "_";
+
+			# $i refers to a chromosome number
+			# Files are split chromosome-specifically			
+			foreach (my $i=1; $i <= 24; $i++) {
+
+				open(IN,"$In_Dir$Slash$file") or die "$!";			
+				open(OUT,">>$Out_Dir$Slash$file$Slash$i$Under_Score$file$Output_file") or die "$!";
+
+					select(OUT);
+
+						while (<IN>) {
+						
+							# If DNA sequences are included, they are deleted
+							
+							s/\t//g;
+							s/A//g;
+							s/C//g;
+							s/G//g;
+							s/T//g;
+							
+							# gets rid of the second position if there
+							s/\-.{1,}//g;
+					
+							
+							my @REGEX = split /\:/;
+		
+						print "$i\:$REGEX[1]" if m/^$i:/;
+
+					}
+
+		close(IN);
+		close(OUT);
+
+	}
+#################
+}
+
+close(DIR);
