@@ -1,0 +1,38 @@
+#!/usr/bin/perl -w
+use 5.10.1;
+use warnings;
+use strict;
+
+
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Basename;
+use File::Spec;
+
+
+# Write the list of all sub-directories
+
+my $Dir = 'Paste_directory_Name_Here';
+
+my $Slash = "\/";
+my $Name = "zFILE_NAMES_in_Directory.z";
+
+opendir (DIR,"$Dir") or die "$!";
+
+# Define the 'grep' content as needed
+	
+	my @SUB = grep {/UCSC|CCDS/}  readdir DIR;
+	
+		foreach my $SUB (@SUB) {
+
+			open(OUT,">>$Dir$Slash$Name") or die "$!";				
+				
+				select(OUT);
+				
+					print "\"$SUB\",\n";
+					
+		close(OUT);
+	}	
+close(DIR);
+	
