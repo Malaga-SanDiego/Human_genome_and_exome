@@ -1,0 +1,190 @@
+#!/usr/bin/perl -w
+use 5.006;
+use strict;
+use warnings;
+
+# This script was originally written by Mehis Pold
+# This script helps understand the content of My Personal Genome (PG) files
+# It takes 1.5-2h for this script to fully run on an 8-core laptop on a 2Gb+ PG files containing 17M+ lines
+# The PG files provide both 0- and 1-based variant positions
+# 0-based position is found in 'begin' -> see below
+# 1-based position is found in 'end' -> see below
+
+# Standard perl-modules; I have these modules in all of my scripts
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Basename;
+use File::Spec;
+
+
+
+#### THE $ELEMENT-KEY ####
+
+# $ELEMENT = a data category in MyPersonalGenome downloads
+
+#[1]>locus	
+#[2]ploidy	
+#[3]chromosome	
+#[4]begin
+#[5]end
+#[6]zygosity
+#[7]varType
+#[8]reference
+#[9]allele1Seq
+#[10]allele2Seq
+#[11]allele1VarScoreVAF
+#[12]allele2VarScoreVAF
+#[13]allele1VarScoreEAF
+#[14]allele2VarScoreEAF
+#[15]allele1VarQuality
+#[16]allele2VarQuality
+#[17]allele1HapLink
+#[18]allele2HapLink
+#[19]allele1XRef
+#[20]allele2XRef
+#[21]evidenceIntervalId
+#[22]allele1ReadCount
+#[23]allele2ReadCount
+#[24]referenceAlleleReadCount
+#[25]totalReadCount
+#[26]allele1Gene
+#[27]allele2Gene
+#[28]pfam
+#[29]miRBaseId
+#[30]repeatMasker
+#[31]segDupOverlap
+#[32]relativeCoverageDiploid
+#[33]calledPloidy
+#[34]relativeCoverageNondiploid
+#[35]calledLevel
+
+
+##### VARIABLES #####: change directory names as needed
+# Add more variables as needed
+# Define any file extension that perl can handle
+# Add more file handling capacities to this script as needed
+
+# Enter your input directory in single quotes of my $Element_Input = ''
+# Enter your output directory in single quotes of my $Element_Output = ''
+
+
+### VARIABLES ############
+# INPUT_OUTPUT DIRECTORIES - they contain the directories in my lap top; 
+
+my $Element_Input = 'Paste_Paste_Input_Directory_Here';
+my $Element_Output = 'Paste_Paste_Output_Directory_Here/NR'; # do not change the '/NR' part
+
+my $Slash = "\/";
+
+# File extensions: nothing defined yet
+# File extensions can be modified, new ones added etc depending on the needs
+# NR stands for non-redundant (unique)
+# Each category of data in my Personal Genome (PG) files whole genome files is made NR by this script
+# NR categories help understand the content of PG files
+# NR categories help write scripts to retrieve specific variants out of PG files
+
+my $NR = 'NR_';
+
+
+# STEP1: create the directory called 'NR' where each category of PG data is written into a separate file
+
+mkdir("$Element_Output")  or die "$!";
+
+# the $i values in the belwo 'foreach' loop can be modified as needed if not the entire file is of interest
+# For example, if only the category named 'varType' needs to be understood then use the following statement:
+
+## foreach (my $i=6; $i <= 6; $i++)
+
+foreach (my $i=0; $i <= 34; $i++) {
+
+# $i = MyPersonalGenome categories in the $ELEMENT-key
+# Each data category will be written into a file of appropriate name
+# Some unwanted descriptive stuff from an input file will written into 'locus' and 'ploidy' files
+# One can get rid of this unwanted stuff manually
+
+my $ELEMENT = 'locus' if $i == 0;
+$ELEMENT = 'ploidy' if $i == 1;
+$ELEMENT = 'chromosome' if $i == 2;
+$ELEMENT = 'begin' if $i == 3;
+$ELEMENT = 'end' if $i == 4;
+$ELEMENT = 'zygosity' if $i == 5;
+$ELEMENT = 'varType' if $i == 6;
+$ELEMENT = 'reference' if $i == 7;
+$ELEMENT = 'allele1Seq' if $i == 8;
+$ELEMENT = 'allele2Seq' if $i == 9;
+$ELEMENT = 'allele1VarScoreVAF' if $i == 10;
+$ELEMENT = 'allele2VarScoreVAF' if $i == 11;
+$ELEMENT = 'allele1VarScoreEAF' if $i == 12;
+$ELEMENT = 'allele2VarScoreEAF' if $i == 13;
+$ELEMENT = 'allele1VarQuality' if $i == 14;
+$ELEMENT = 'allele2VarQuality' if $i == 15;
+$ELEMENT = 'allele1HapLink' if $i == 16;
+$ELEMENT = 'allele2HapLink' if $i == 17;
+$ELEMENT = 'allele1XRef' if $i == 18;
+$ELEMENT = 'allele2XRef' if $i == 19;
+$ELEMENT = 'evidenceIntervalId' if $i == 20;
+$ELEMENT = 'allele1ReadCount' if $i == 21;
+$ELEMENT = 'allele2ReadCount' if $i == 22;
+$ELEMENT = 'referenceAlleleReadCount' if $i == 23;
+$ELEMENT = 'totalReadCount' if $i == 24;
+$ELEMENT = 'allele1Gene' if $i == 25;
+$ELEMENT = 'allele2Gene' if $i == 26;
+$ELEMENT = 'pfam' if $i == 27;
+$ELEMENT = 'miRBaseId' if $i == 28;
+$ELEMENT = 'repeatMasker' if $i == 29;
+$ELEMENT = 'segDupOverlap' if $i == 30;
+$ELEMENT = 'relativeCoverageDiploid' if $i == 31;
+$ELEMENT = 'calledPloidy' if $i == 32;
+$ELEMENT = 'relativeCoverageNondiploid' if $i == 33;
+$ELEMENT = 'calledLevel' if $i == 34;
+
+
+# STEP2: Split a PG file into PG-category-specific files
+
+opendir (DIR,"$Element_Input") or die "$!";
+
+# The grep function recognizes all files with the .txt extension
+# Change the regex for 'grep' as needed
+
+	my @files = grep {/\.txt$/}  readdir DIR;
+
+		foreach my $file (@files) {
+			open(IN,"$Element_Input$Slash$file") or die "$!";
+			open(OUT,">>$Element_Output$Slash$ELEMENT") or die "$!";
+
+				select(OUT);
+
+					while (<IN>) {
+
+						my @REGEX = split /\t/;
+
+							print "$REGEX[$i]\n";
+
+						}
+				close(IN);
+				close(OUT);
+			}
+close(DIR);
+
+
+
+# STEP3: NR the PG-category-specific files
+
+# Each data category file is made into a NR data set
+# Hence, 50% of the file names in the NR folder will have the 'NR_' suffix
+
+open(IN,"$Element_Output$Slash$ELEMENT") or die "$!";
+open(OUT,">>$Element_Output$Slash$NR$ELEMENT") or die "$!";
+
+	select(OUT);
+
+		my %seen;
+
+			while (<IN>){
+
+		print if $seen{$_}++ == 0; # removes replicates, prints out singles
+	}
+close(IN);
+close(OUT);
+}
